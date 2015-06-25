@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+  echo "$0 X (192.168.X.50-250 will be used)"
+  exit 1
+fi
+
+nmap 192.168.$1.50-250 -sP -oG - | awk '/Up/ {print $2}' | xargs -P 8 -n 1 ../reload

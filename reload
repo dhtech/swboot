@@ -1,0 +1,4 @@
+#!/bin/sh
+
+sleep 1
+snmpset -v 2c -c private $1 .1.3.6.1.4.1.9.2.9.9.0 i 2

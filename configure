@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Tell a switch to fetch configuration from TFTP.
+#
+# Wait until it responds to SNMP and wait until the transfer is complete.
+#
+
+ID=$RANDOM
+IP=$1
+
+CNT=0
+while [ true ];
+do
+  snmpget -Ov -v 2c -c private $IP 1.3.6.1.2.1.1.5.0 &> /dev/null
+  if [ "$?" = "0" ]; then
+    break
+  fi
+
+  CNT=$(($CNT + 1))
+  if [ "$CNT" = 20 ]; then
+    echo "Timeout waiting for SNMP for $IP." \
+      | logger -p error -t configure
+    exit 1
+  fi
+
+  echo "Waiting for SNMP ..."
+  sleep 5
+done
+
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.2.$ID i 1
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.3.$ID i 1
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.4.$ID i 4
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.5.$ID a 192.168.20.10
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.6.$ID s BASE-confg
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.14.$ID i 1
+
+RET=2
+CNT=0
+while [ "$RET" = "2" ];
+do
+  echo "Waiting for switch to apply configuration ..."
+  sleep 10
+  RET=$(snmpget -Ov -v 2c -c private $IP \
+    .1.3.6.1.4.1.9.9.96.1.1.1.1.10.$ID | cut -f 2 -d ' ')
+  CNT=$(($CNT + 1))
+  if [ "$CNT" = 6 ]; then
+    echo "Timeout waiting for switch to apply configuration for $IP." \
+      | logger -p error -t configure
+    exit 1
+  fi
+done
+
+echo "Return: $RET"
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.14.$ID i 6
+
+SWITCH=$(redis-cli --raw get $IP)
+echo "Successfully pushed configuration to $SWITCH ($IP)" \
+  | logger -t configure
