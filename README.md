@@ -33,48 +33,48 @@ For event configs, see SVN allevents/access/default-paste/
 
 In general, something like this will work:
 
-  en
-  conf t
-  boot host dhcp
-  interface vlan 1
-  no ip address
-  no shut
-  !
-  snmp-server community public RO
-  snmp-server community private RW
-  snmp-server system-shutdown
-  !
-  wr
-  !
+    en
+    conf t
+    boot host dhcp
+    interface vlan 1
+    no ip address
+    no shut
+    !
+    snmp-server community public RO
+    snmp-server community private RW
+    snmp-server system-shutdown
+    !
+    wr
+    !
 
 
 ## Dist switch
 
-  en
-  conf t
-  ip routing
-  !
-  ip dhcp snooping vlan 1
-  ! Perhaps needed:
-  ! ip dhcp snooping information option allow-untrusted
-  ip dhcp snooping
-  !         
-  !         
-  interface GigabitEthernet1/0/5
-   description DHCP-server
-   switchport access vlan 123
-   switchport mode access
-   spanning-tree portfast
-   ip dhcp snooping trust
-  !         
-  interface GigabitEthernet1/0/20
-   spanning-tree portfast
-   ip dhcp snooping vlan 1 information option format-type circuit-id string B01-B
-  !
-  interface Vlan1
-   ip address 10.80.10.1 255.255.255.0
-   ip helper-address 10.255.253.2
-  !
-  interface Vlan123
-   ip address 10.255.253.5 255.255.255.0
-  !
+    en
+    conf t
+    ip routing
+    !
+    ip dhcp snooping vlan 1
+    ! Perhaps needed:
+    ! ip dhcp snooping information option allow-untrusted
+    ip dhcp snooping
+    !         
+    !         
+    interface GigabitEthernet1/0/5
+     description DHCP-server
+     switchport access vlan 123
+     switchport mode access
+     spanning-tree portfast
+     ip dhcp snooping trust
+    !         
+    interface GigabitEthernet1/0/20
+     spanning-tree portfast
+     ip dhcp snooping vlan 1 information option format-type circuit-id string B01-B
+    !
+    interface Vlan1
+     ip address 10.80.10.1 255.255.255.0
+     ip helper-address 10.255.253.2
+    !
+    interface Vlan123
+     ip address 10.255.253.5 255.255.255.0
+    !
