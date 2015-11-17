@@ -24,7 +24,7 @@ def error(*args):
 def sw_reload(ip):
   error("Reloading switch")
   try:
-    os.system("/srv/swboot/reload " + ip + " &")
+    os.system("/scripts/swboot/reload " + ip + " &")
   except:
     error("Exception in reload:", traceback.format_exc())
 

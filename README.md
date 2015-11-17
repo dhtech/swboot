@@ -14,7 +14,7 @@ License is GPLv3 if nothing else is stated.
     cp config-sample.py config.py
 
 ## dhcpd.conf
-    include "/srv/swboot/dhcpd.conf";
+    include "/scripts/swboot/dhcpd.conf";
 
 ## Start swtftpd
     sudo python swtftpd.py

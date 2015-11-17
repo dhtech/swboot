@@ -12,4 +12,4 @@ if sys.argv[1] == "commit":
   db.set(ip, sw)
   if relay != '0.0.0.0':
     db.set('relay-%s' % ip, relay)
-  os.system("/srv/swboot/configure " + ip + " &")
+  os.system("/scripts/swboot/configure " + ip + " &")
