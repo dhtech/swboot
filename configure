@@ -30,7 +30,7 @@ done
 snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.2.$ID i 1
 snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.3.$ID i 1
 snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.4.$ID i 4
-snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.5.$ID a 192.168.20.10
+snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.5.$ID a 192.168.40.10
 snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.6.$ID s BASE-confg
 snmpset -v 2c -c private $IP .1.3.6.1.4.1.9.9.96.1.1.1.1.14.$ID i 1
 
