@@ -163,7 +163,7 @@ log("swtftpd started")
 tftpy.setLogLevel(logging.WARNING)
 server = tftpy.TftpServer(file_callback)
 try:
-  server.listen("192.168.20.10", 69)
+  server.listen("192.168.40.10", 69)
 except tftpy.TftpException, err:
   sys.stderr.write("%s\n" % str(err))
   sys.exit(1)
