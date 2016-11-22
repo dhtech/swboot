@@ -142,7 +142,7 @@ def file_callback(context):
 
   if not re.match('[A-Z]{1,2}[0-9][0-9]-[A-C]', switch):
     sw_reload(ip)
-    error("Switch", ip, "does not match regexp, invalid option 82?")
+    error("Switch", ip, "does not match regexp, invalid option 82? Received ", option82, " as option 82")
     return None
 
   f = tempfile.TemporaryFile()

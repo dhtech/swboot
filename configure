@@ -18,7 +18,9 @@ do
 
   CNT=$(($CNT + 1))
   if [ "$CNT" = 20 ]; then
-    echo "Timeout waiting for SNMP for $IP." \
+    SWITCH=$(redis-cli --raw get $IP)
+    NETWORKNAME=$(redis-cli --raw get networkname-$IP)
+    echo "Timeout waiting for SNMP for $IP ($SWITCH). Network: $NETWORKNAME" \
       | logger -p error -t configure
     exit 1
   fi
