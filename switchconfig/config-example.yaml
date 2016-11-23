@@ -10,3 +10,27 @@ wifi:
     - "D06-B"
     - "LN02-A"
     - "LN06-A"
+
+models:
+  - name: "WS-C2950T-24"
+    path: "/scripts/swboot/switchconfig/c2950t.cfg"
+    ports: 24
+  - name: "WS-C2950G-24-EI"
+    path: "/scripts/swboot/switchconfig/c2950t.cfg"
+    ports: 24
+  - name: "WS-C2950T-48-SI"
+    path: "/scripts/swboot/switchconfig/c2950t.cfg"
+    ports: 48
+  - name: "WS-C2960G-48TC-L"
+    path: "/scripts/swboot/switchconfig/c2960g.cfg"
+    ports: 48
+  - name: "WS-C2960X-48TS-L"
+    path: "/scripts/swboot/switchconfig/c2960x.cfg"
+    ports: 48
+  - name: "WS-C2960X-48LPD-L"
+    path: "/scripts/swboot/switchconfig/c2960x.cfg"
+    ports: 48
+
+static_files:
+  - c2950.bin: "/scripts/swboot/switchconfig/ios/c2950-i6k2l2q4-mz.121-22.EA14.bin"
+

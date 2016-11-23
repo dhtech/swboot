@@ -35,21 +35,17 @@ snmpv3_username = ''
 snmpv3_auth = ''
 snmpv3_priv = ''
 
-models = {
-  "WS-C2950T-24"      : bunch(template="switchconfig/c2950t.cfg",eth=24),
-  "WS-C2950G-24-EI"   : bunch(template="switchconfig/c2950t.cfg",eth=24),
-  "WS-C2950T-48-SI"   : bunch(template="switchconfig/c2950t.cfg",eth=48),
-  "WS-C2960G-48TC-L"  : bunch(template="switchconfig/c2960g.cfg",eth=48),
-  "WS-C2960X-48TS-L"  : bunch(template="switchconfig/c2960x.cfg",eth=48),
-  "WS-C2960X-48LPD-L" : bunch(template="switchconfig/c2960x.cfg",eth=48),
-}
+models = {}
+for model in yaml_conf['models']:
+  models.update({model['name']: bunch(template=model['path'],eth=model['ports'])})
 
 wifi_switches = yaml_conf['wifi']['switches']
 
 # Files to be served as they are to all devices
-static_files = {
-    "c2950.bin"         : "ios/c2950-i6k2l2q4-mz.121-22.EA14.bin",
-}
+static_files = {}
+for sf in yaml_conf['static_files']:
+  static_files.update(sf)
+
 
 # ===============================================================
 # Do not change below this if you do not know what you're doing!
@@ -106,8 +102,11 @@ AND h.name = s.switch_name AND n_mgmt.node_id = h.network_id'''
   db = sqlite3.connect('/etc/ipplan.db')
   cursor = db.cursor()
 
-  network_str, mgmt_ip, gateway, mgmt_vlan, vlan = cursor.execute(
-      sql, ('%s%%' % switch.lower(),)).fetchone()
+  row = cursor.execute(sql, ('%s%%' % switch.lower(),)).fetchone()
+  if row is None:
+    return None, None
+
+  network_str, mgmt_ip, gateway, mgmt_vlan, vlan = row
 
   network = ipcalc.Network(network_str)
 
