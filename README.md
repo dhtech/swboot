@@ -5,7 +5,7 @@ On-demand switch configuration system.
 License is GPLv3 if nothing else is stated.
 
 ## Dependencies
-    sudo apt-get install redis-server python-redis libsnmp-python python-tempita python-ipcalc isc-dhcp-server snmp
+    sudo apt-get install redis-server python-redis libsnmp-python python-tempita python-ipcalc python-yaml isc-dhcp-server snmp
 
 ## Config
     sudo /sbin/ifconfig eth1 inet 192.168.8.10 netmask 255.255.255.0
