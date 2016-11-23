@@ -3,23 +3,28 @@ import ipcalc
 import sqlite3
 import sys
 import tempita
+import yaml
 from tempita import bunch
 import hashlib
 
+f = file('switchconfig/config.yaml', 'r')
+yaml_conf = yaml.load(f)
+
 # Note: To add new variables, the generate function will need to 
 # be modified as well
-
+radius = ""
+username = ""
 password = ""
 enable = ""
 snmp_ro = ""
 snmp_salt = ""
-radius = ""
+
 # NOTE(bluecmd): 2950 doesn't support VLAN aware context, which means that
 # WhereAmI and dhmon needs v2. No reason to have v3 in that case.
 #snmp_user = ""
 #snmp_auth = ""
 #snmp_priv = ""
-wifi_vlanid = 851
+wifi_vlanid = yaml_conf['wifi']['vlan_id']
 
 # Enable this if we cannot set special option82 tags
 franken_net_switches = [ ]
@@ -36,15 +41,10 @@ models = {
   "WS-C2950T-48-SI"   : bunch(template="switchconfig/c2950t.cfg",eth=48),
   "WS-C2960G-48TC-L"  : bunch(template="switchconfig/c2960g.cfg",eth=48),
   "WS-C2960X-48TS-L"  : bunch(template="switchconfig/c2960x.cfg",eth=48),
+  "WS-C2960X-48LPD-L" : bunch(template="switchconfig/c2960x.cfg",eth=48),
 }
 
-wifi_switches = [ ]
-
-#wifi_switches = [
-#  "B01-A", "B05-A", "B10-A", "B16-A", "B22-C", "B26-C", "B31-C", "B37-C", 
-#  "C04-A", "C08-A", "C12-A", "C17-C", "C21-C", "C25-C", "C29-C",
-#  "D03-A", "D09-B", "D19-B", "D23-A", "D29-A", "D34-C", "D40-C", "D44-C", "D48-C", "D56-C", "D62-C"
-#]
+wifi_switches = yaml_conf['wifi']['switches']
 
 # Files to be served as they are to all devices
 static_files = {
@@ -61,6 +61,19 @@ def generate(switch, model_id):
   mgmt, vlanid = parse_metadata(switch)
   if mgmt is None:
     raise Exception("The switch " + switch + " was not found in ipplan")
+  if radius is None:
+    raise Exception("Radius key not set")
+  if username is None:
+    raise Exception("Username not set")
+  if password is None:
+    raise Exception("User-password not set")
+  if enable is None:
+    raise Exception("Enable password not set")
+  if snmp_ro is None:
+    raise Exception("SNMP ro not set")
+  if snmp_salt is None:
+    raise Exception("SNMP salt not set")
+
 
   cfg = tempita.Template(file(model.template).read())
   return \

@@ -1,0 +1,12 @@
+wifi:
+  vlan_id: 851
+  switches:
+    - "B09-B"
+    - "B12-B"
+    - "B15-B"
+    - "C01-A"
+    - "C08-A"
+    - "C14-A"
+    - "D06-B"
+    - "LN02-A"
+    - "LN06-A"
