@@ -13,6 +13,7 @@ if sys.argv[1] == "commit":
   swClient = sys.argv[5]
   swRelay = sys.argv[6]
   db.set(swIp, swName)
+  db.set('ip-{}'.format(swIp), swMac)
   db.set('mac-{}'.format(swMac), swIp)
   if swRelay != '0.0.0.0':
     db.set('relay-{}'.format(SwIp), swRelay)
