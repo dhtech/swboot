@@ -8,6 +8,8 @@ import netsnmp
 import traceback
 import re
 import os
+import yaml
+from netaddr import *
 
 import config
 
@@ -27,6 +29,13 @@ def sw_reload(ip):
     os.system("/scripts/swboot/reload " + ip + " &")
   except:
     error("Exception in reload:", traceback.format_exc())
+def getBaseMac(mac, mac_addon = 64):
+  mac = EUI(mac)
+  int_mac = int(mac)
+  base_mac_int = int_mac - mac_addon
+  base_mac = EUI(base_mac_int)
+  base_mac.dialect = mac_unix_expanded
+  return str(base_mac)
 
 def generate(out, ip, switch):
   # Get Cisco model name (two tries)
@@ -98,12 +107,23 @@ def file_callback(context):
     return file(config.static_files[context.file_to_transfer])
 
   global db
+  ip = context.host
+  mac = db.get('ip-{}'.format(ip))
+
+  with open('/scripts/swboot/distconfig/inventory.yaml') as yaml_data:
+    dist_mac = yaml.safe_load(yaml_data)
+    yaml_loaded = {x['mac']: x['name'] for x in dist_mac['switch']}
+    swBaseMac = getBaseMac(mac)
+    yamlSwName = yaml_loaded.get(swBaseMac, None)
+    if yamlSwName is not None:
+      switch_configfile = open("/scripts/dist-ansible/compiled/base/{}.conf".format(yamlSwName))
+      return switch_configfile
+
   option82 = db.get(context.host)
   if option82 is None:
     error('No record of switch', context.host, 'in Redis, ignoring ..')
     return None
 
-  ip = context.host
   # If we do not have any franken switches, do not execute this horrible code path
   if not config.franken_net_switches:
     switch = option82
