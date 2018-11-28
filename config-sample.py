@@ -5,6 +5,7 @@ import sys
 import tempita
 import yaml
 from tempita import bunch
+from collections import namedtuple
 import hashlib
 
 f = file('switchconfig/config.yaml', 'r')
@@ -51,6 +52,46 @@ for sf in yaml_conf['static_files']:
 # Do not change below this if you do not know what you're doing!
 # ===============================================================
 
+# ipplan_host('myhost.event.dreamhack.se')
+#   returns Host object with name, ipv4, and ipv6 properties from ipplan
+#   database
+Host = namedtuple('Host', 'name ipv4 ipv6')
+def ipplan_host(hostname):
+  sql = '''SELECT h.name, h.ipv4_addr_txt as ipv4, h.ipv6_addr_txt as ipv6 
+           FROM host as h 
+           WHERE h.name = ?;'''
+
+  db = sqlite3.connect('/etc/ipplan.db')
+  db.row_factory = sqlite3.Row
+
+  cursor = db.cursor()
+
+  row = cursor.execute(sql, (hostname,)).fetchone()
+  if row is None:
+    raise Exception("No IPv4 address found for host %s not in ipplan" % hostname)
+
+  return Host(name=row['name'], ipv4=row['ipv4'], ipv6=row['ipv6'])
+
+# ipplan_package('mypackage')
+#   returns array of Host objects containing hosts with the given package from
+#   ipplan database
+def ipplan_package(package):
+  sql = '''SELECT h.name, h.ipv4_addr_txt as ipv4, h.ipv6_addr_txt as ipv6 
+           FROM host as h 
+           INNER JOIN package as p ON p.node_id = h.node_id 
+           WHERE p.name = ?;'''
+
+  db = sqlite3.connect('/etc/ipplan.db')
+  db.row_factory = sqlite3.Row
+
+  cursor = db.cursor()
+
+  hosts = []
+  for row in cursor.execute(sql, (package,)):
+    hosts.append(Host(name=row['name'], ipv4=row['ipv4'], ipv6=row['ipv6']))
+
+  return sorted(set(hosts), key=lambda e: e.name)
+
 def generate(switch, model_id):
   model = config.models[model_id]
 
@@ -70,7 +111,9 @@ def generate(switch, model_id):
   if snmp_salt is None:
     raise Exception("SNMP salt not set")
 
-
+  #
+  # Template function definition
+  #
   cfg = tempita.Template(file(model.template).read())
   return \
       cfg.substitute(
@@ -88,6 +131,8 @@ def generate(switch, model_id):
             radius=config.radius,
             snmp_ro=config.snmp_ro,
             snmp_rw=hashlib.sha1(config.snmp_salt + mgmt['ip']).hexdigest(),
+            ipplan_host=lambda h: ipplan_host(h),
+            ipplan_pkg=lambda p: ipplan_package(p),
 #           snmp_user=config.snmp_user,
 #           snmp_auth=config.snmp_auth,
 #           snmp_priv=config.snmp_priv
