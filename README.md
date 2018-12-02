@@ -78,3 +78,13 @@ In general, something like this will work:
     interface Vlan123
      ip address 10.255.253.5 255.255.255.0
     !
+
+## generate_bulk.py
+The switches for which the configs should be generated for
+can be found in "switches.yaml" in the switchconfig/ directory.
+In this file you can add any switch you would like aslong as its
+model is configured in the "config.yaml" and it is present in the ipplan.
+
+Too generate the configs run the command:
+
+	python generate_bulk.py DEST_FOLDER/

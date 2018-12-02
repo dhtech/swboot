@@ -1,0 +1,7 @@
+models: 
+  WS-C2960X-48LPD-L:
+    - "D11-A"
+    - "D25-A"
+    - "C11-B"
+  WS-C2960X-48TS-L:
+    - "D11-B"

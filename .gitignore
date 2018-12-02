@@ -1,0 +1,4 @@
+*.pyc
+config.py
+switchconfig/switches.yaml
+switchconfig/config.yaml
