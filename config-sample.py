@@ -38,7 +38,10 @@ snmpv3_priv = ''
 
 models = {}
 for model in yaml_conf['models']:
-  models.update({model['name']: bunch(template=model['path'],eth=model['ports'])})
+  data = bunch(template=model['path'],eth=model['ports'])
+  if 'image' in model:
+    data.image = model['image']
+  models.update({model['name']: data})
 
 wifi_switches = yaml_conf['wifi']['switches']
 

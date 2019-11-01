@@ -29,14 +29,16 @@ def sw_reload(ip):
     error("Exception in reload:", traceback.format_exc())
 
 def generate(out, ip, switch):
-  # Get Cisco model name (two tries)
-  for i in xrange(2):
-    var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1')
-    model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
-
-    if model == None:
-      var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1001')
+  model = db.get('client-{}'.format(ip))
+  if model == None:
+    # Get Cisco model name (two tries)
+    for i in xrange(2):
+      var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1')
       model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
+
+      if model == None:
+        var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1001')
+        model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
     
   if model == None:
     sw_reload(ip)
@@ -51,7 +53,6 @@ def generate(out, ip, switch):
   # Throws exception if something bad happens
   try:
     txt = config.generate(switch, model)
-    out.write("! Config for " + switch + "\n")
     out.write(txt)
   except:
     sw_reload(ip)
@@ -139,6 +140,11 @@ def file_callback(context):
     base(f, switch)
     f.seek(0)
     return f
+
+  if context.file_to_transfer == "juniper.tgz":
+    model = db.get('client-{}'.format(context.host))
+    if (model in config.models) and ('image' in config.models[model]):
+      return file(config.models[model]['image'])
 
   if not re.match('[A-Z]{1,2}[0-9][0-9]-[A-C]', switch):
     sw_reload(ip)
