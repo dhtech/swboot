@@ -3,6 +3,7 @@ import os
 import redis
 import sys
 import sqlite3
+import re
 
 db = redis.Redis()
 
@@ -10,16 +11,19 @@ if sys.argv[1] == "commit":
   swMac = sys.argv[2]
   swIp = sys.argv[3]
   swName = sys.argv[4]
-  swClient = sys.argv[5]
+  # Remove the serial number from Juniper's vendor-class-identifier.
+  swClient = re.sub(r'(Juniper.*)-[^-]+$', r'\1', sys.argv[5])
   swRelay = sys.argv[6]
   db.set(swIp, swName)
   db.set('ip-{}'.format(swIp), swMac)
+  db.set('client-{}'.format(swIp), swClient)
   db.set('mac-{}'.format(swMac), swIp)
   if swRelay != '0.0.0.0':
-    db.set('relay-{}'.format(SwIp), swRelay)
+    db.set('relay-{}'.format(swIp), swRelay)
     sqlidb = sqlite3.connect('/etc/ipplan.db')
     cursor = sqlidb.cursor()
     sql = "SELECT short_name FROM network WHERE ipv4_gateway_txt = ?"
     networkname = cursor.execute(sql, (swRelay, )).fetchone()[0]
     db.set('networkname-{}'.format(swIp), networkname)
-  os.system("/scripts/swboot/configure " + swIp + " &")
+  if swClient[:7] != "Juniper":
+    os.system("/scripts/swboot/configure " + swIp + " &")
