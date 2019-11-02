@@ -8,17 +8,18 @@ import netsnmp
 import traceback
 import re
 import os
+import time
 
 import config
 
 db = redis.Redis()
 
 def log(*args):
-  print ' '.join(args)
+  print time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args)
   syslog.syslog(syslog.LOG_INFO, ' '.join(args))
 
 def error(*args):
-  print 'ERROR:', ' '.join(args)
+  print time.strftime("%Y-%m-%d %H:%M:%S") + ': ERROR:', ' '.join(args)
   syslog.syslog(syslog.LOG_ERR, ' '.join(args))
 
 def sw_reload(ip):
@@ -94,17 +95,16 @@ def resolve_option82(relay, option82):
         '.1.3.6.1.4.1.9.2.2.1.1.28.%d' % int(iface))
       return snmpv3_command(var, relay, netsnmp.snmpget)[0][6:]
 
-def file_callback(context):
-  if context.file_to_transfer in config.static_files:
-    return file(config.static_files[context.file_to_transfer])
+def file_callback(file_to_transfer, ip, rport):
+  if file_to_transfer in config.static_files:
+    return file(config.static_files[file_to_transfer])
 
   global db
-  option82 = db.get(context.host)
+  option82 = db.get(ip)
   if option82 is None:
-    error('No record of switch', context.host, 'in Redis, ignoring ..')
+    error('No record of switch', ip, 'in Redis, ignoring ..')
     return None
 
-  ip = context.host
   # If we do not have any franken switches, do not execute this horrible code path
   if not config.franken_net_switches:
     switch = option82
@@ -132,17 +132,17 @@ def file_callback(context):
   print 'Switch is "%s"' % switch
   db.set('switchname-%s' % ip, switch)
 
-  if (context.file_to_transfer == "network-confg" or
-      context.file_to_transfer == "Switch-confg"):
+  if (file_to_transfer == "network-confg" or
+      file_to_transfer == "Switch-confg"):
     f = tempfile.TemporaryFile()
-    log("Generating base config", context.file_to_transfer,
-        "for", context.host,"config =", switch)
+    log("Generating base config", file_to_transfer,
+        "for", ip,"config =", switch)
     base(f, switch)
     f.seek(0)
     return f
 
-  if context.file_to_transfer == "juniper.tgz":
-    model = db.get('client-{}'.format(context.host))
+  if file_to_transfer == "juniper.tgz":
+    model = db.get('client-{}'.format(ip))
     if (model in config.models) and ('image' in config.models[model]):
       return file(config.models[model]['image'])
 
@@ -152,13 +152,13 @@ def file_callback(context):
     return None
 
   f = tempfile.TemporaryFile()
-  if context.file_to_transfer.lower().endswith("-confg"):
+  if file_to_transfer.lower().endswith("-confg"):
     log("Generating config for", ip,"config =", switch)
     if generate(f, ip, switch) == None:
       return None
   else:
     error("Switch", ip, "config =", switch, "tried to get file",
-        context.file_to_transfer)
+        file_to_transfer)
     f.close()
     return None
 
@@ -166,13 +166,13 @@ def file_callback(context):
   return f
 
 log("swtftpd started")
-tftpy.setLogLevel(logging.WARNING)
-server = tftpy.TftpServer(file_callback)
+server = tftpy.TftpServer('/scripts/swboot/ios', file_callback)
+tftplog = logging.getLogger('tftpy.TftpClient')
+tftplog.setLevel(logging.WARN)
 try:
   server.listen("192.168.40.10", 69)
 except tftpy.TftpException, err:
   sys.stderr.write("%s\n" % str(err))
   sys.exit(1)
 except KeyboardInterrupt:
-  pass
-
+  sys.stderr.write("\n")

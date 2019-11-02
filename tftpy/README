@@ -1,5 +1,25 @@
 Copyright, Michael P. Soulier, 2010.
 
+About Release 0.8.0:
+====================
+This version introduces Python 3.X support.
+And there was much rejoicing.
+
+About Release 0.7.0:
+====================
+Various bugfixes and refactoring for improved logging.
+Now requiring python 2.7+ and tightening syntax in
+preparation for supporting python 3.
+
+About Release 0.6.2:
+====================
+Maintenance release to fix a couple of reported issues.
+
+About Release 0.6.1:
+====================
+Maintenance release to fix several reported problems, including a rollover
+at 2^16 blocks, and some contributed work on dynamic file objects.
+
 About Release 0.6.0:
 ====================
 Maintenance update to fix several reported issues, including proper
@@ -85,7 +105,7 @@ easy inclusion in a UI for populating progress indicators. It supports RFCs
 
 Dependencies:
 -------------
-Python 2.3+, hopefully. Let me know if it fails to work.
+Python 2.7+, hopefully. Let me know if it fails to work.
 
 Trifles:
 --------

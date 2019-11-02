@@ -33,11 +33,11 @@ models:
   - name: "Juniper-ex3400-24t"
     path: "/scripts/swboot/switchconfig/ex3400.cfg"
     ports: 24
-    image: "/scripts/swboot/junos/junos-arm-32-19.3R1.8.tgz"
+    image: "junos/junos-arm-32-19.3R1.8.tgz"
   - name: "Juniper-ex3400-48t"
     path: "/scripts/swboot/switchconfig/ex3400.cfg"
     ports: 48
-    image: "/scripts/swboot/junos/junos-arm-32-19.3R1.8.tgz"
+    image: "junos/junos-arm-32-19.3R1.8.tgz"
 
 static_files:
   - c2950.bin: "/scripts/swboot/ios/c2950-i6k2l2q4-mz.121-22.EA14.bin"

@@ -118,8 +118,7 @@ def generate(switch, model_id):
   # Template function definition
   #
   cfg = tempita.Template(file(model.template).read())
-  return \
-      cfg.substitute(
+  cfg_subbed = cfg.substitute(
             hostname=switch,
             model=model,
             mgmt_ip=mgmt['ip'],
@@ -140,6 +139,20 @@ def generate(switch, model_id):
 #           snmp_auth=config.snmp_auth,
 #           snmp_priv=config.snmp_priv
             )
+  # We make the Juniper config a script, to be able to add the crontab.
+  if model_id[:7] == "Juniper":
+    cfg_subbed = '''#!/bin/sh
+echo "" > /tmp/dhtech.config
+fullconfig=$(cat << "ENDOFCONFIG"
+''' + cfg_subbed + '''
+ENDOFCONFIG
+)
+echo "$fullconfig" >> /tmp/dhtech.config
+echo '@reboot sleep 30; cli -c "configure private;set chassis auto-image-upgrade;commit"' > /tmp/dhtech.cron
+crontab /tmp/dhtech.cron
+cli -c "configure private;delete;load merge /tmp/dhtech.config;commit"
+'''
+  return cfg_subbed
 
 def parse_metadata(switch):
   sql = '''SELECT n_mgmt.ipv4_txt, h.ipv4_addr_txt, n_mgmt.ipv4_gateway_txt, 
