@@ -1,3 +1,5 @@
+# vim: ts=4 sw=4 et ai:
+# -*- coding: utf8 -*-
 """This module implements all contexts for state handling during uploads and
 downloads, the main interface to which being the TftpContext base class.
 
@@ -8,11 +10,18 @@ the next packet in the transfer, and returns a state object until the transfer
 is complete, at which point it returns None. That is, unless there is a fatal
 error, in which case a TftpException is returned instead."""
 
-from TftpShared import *
-from TftpPacketTypes import *
-from TftpPacketFactory import TftpPacketFactory
-from TftpStates import *
-import socket, time, sys
+
+from .TftpShared import *
+from .TftpPacketTypes import *
+from .TftpPacketFactory import TftpPacketFactory
+from .TftpStates import *
+import socket
+import time
+import sys
+import os
+import logging
+
+log = logging.getLogger('tftpy.TftpContext')
 
 ###############################################################################
 # Utility classes
@@ -43,18 +52,18 @@ class TftpMetrics(object):
         self.duration = self.end_time - self.start_time
         if self.duration == 0:
             self.duration = 1
-        log.debug("TftpMetrics.compute: duration is %s" % self.duration)
+        log.debug("TftpMetrics.compute: duration is %s", self.duration)
         self.bps = (self.bytes * 8.0) / self.duration
         self.kbps = self.bps / 1024.0
-        log.debug("TftpMetrics.compute: kbps is %s" % self.kbps)
+        log.debug("TftpMetrics.compute: kbps is %s", self.kbps)
         for key in self.dups:
             self.dupcount += self.dups[key]
 
     def add_dup(self, pkt):
         """This method adds a dup for a packet to the metrics."""
-        log.debug("Recording a dup of %s" % pkt)
+        log.debug("Recording a dup of %s", pkt)
         s = str(pkt)
-        if self.dups.has_key(s):
+        if s in self.dups:
             self.dups[s] += 1
         else:
             self.dups[s] = 1
@@ -67,7 +76,7 @@ class TftpMetrics(object):
 class TftpContext(object):
     """The base class of the contexts."""
 
-    def __init__(self, host, port, timeout):
+    def __init__(self, host, port, timeout, localip = ""):
         """Constructor for the base context, setting shared instance
         variables."""
         self.file_to_transfer = None
@@ -75,6 +84,8 @@ class TftpContext(object):
         self.options = None
         self.packethook = None
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if localip != "":
+            self.sock.bind((localip, 0))
         self.sock.settimeout(timeout)
         self.timeout = timeout
         self.state = None
@@ -110,19 +121,21 @@ class TftpContext(object):
     def checkTimeout(self, now):
         """Compare current time with last_update time, and raise an exception
         if we're over the timeout time."""
-        log.debug("checking for timeout on session %s" % self)
+        log.debug("checking for timeout on session %s", self)
         if now - self.last_update > self.timeout:
-            raise TftpTimeout, "Timeout waiting for traffic"
+            raise TftpTimeout("Timeout waiting for traffic")
 
     def start(self):
-        raise NotImplementedError, "Abstract method"
+        raise NotImplementedError("Abstract method")
 
-    def end(self):
+    def end(self, close_fileobj=True):
         """Perform session cleanup, since the end method should always be
         called explicitely by the calling code, this works better than the
-        destructor."""
-        log.debug("in TftpContext.end")
-        if self.fileobj is not None and not self.fileobj.closed:
+        destructor.
+        Set close_fileobj to False so fileobj can be returned open."""
+        log.debug("in TftpContext.end - closing socket")
+        self.sock.close()
+        if close_fileobj and self.fileobj is not None and not self.fileobj.closed:
             log.debug("self.fileobj is open - closing")
             self.fileobj.close()
 
@@ -155,12 +168,12 @@ class TftpContext(object):
         try:
             (buffer, (raddress, rport)) = self.sock.recvfrom(MAX_BLKSIZE)
         except socket.timeout:
-            log.warn("Timeout waiting for traffic, retrying...")
-            raise TftpTimeout, "Timed-out waiting for traffic"
+            log.warning("Timeout waiting for traffic, retrying...")
+            raise TftpTimeout("Timed-out waiting for traffic")
 
         # Ok, we've received a packet. Log it.
-        log.debug("Received %d bytes from %s:%s"
-                        % (len(buffer), raddress, rport))
+        log.debug("Received %d bytes from %s:%s",
+                        len(buffer), raddress, rport)
         # And update our last updated time.
         self.last_update = time.time()
 
@@ -169,11 +182,11 @@ class TftpContext(object):
 
         # Check for known "connection".
         if raddress != self.address:
-            log.warn("Received traffic from %s, expected host %s. Discarding"
+            log.warning("Received traffic from %s, expected host %s. Discarding"
                         % (raddress, self.host))
 
         if self.tidport and self.tidport != rport:
-            log.warn("Received traffic from %s:%s but we're "
+            log.warning("Received traffic from %s:%s but we're "
                         "connected to %s:%s. Discarding."
                         % (raddress, rport,
                         self.host, self.tidport))
@@ -193,7 +206,13 @@ class TftpContext(object):
 
 class TftpContextServer(TftpContext):
     """The context for the server."""
-    def __init__(self, host, port, timeout, dyn_file_func=None):
+    def __init__(self,
+                 host,
+                 port,
+                 timeout,
+                 root,
+                 dyn_file_func=None,
+                 upload_open=None):
         TftpContext.__init__(self,
                              host,
                              port,
@@ -203,7 +222,9 @@ class TftpContextServer(TftpContext):
         # need to let the start state determine that.
         self.state = TftpStateServerStart(self)
 
+        self.root = root
         self.dyn_file_func = dyn_file_func
+        self.upload_open = upload_open
 
     def __str__(self):
         return "%s:%s %s" % (self.host, self.port, self.state)
@@ -215,12 +236,12 @@ class TftpContextServer(TftpContext):
         that."""
         log.debug("In TftpContextServer.start")
         self.metrics.start_time = time.time()
-        log.debug("Set metrics.start_time to %s" % self.metrics.start_time)
+        log.debug("Set metrics.start_time to %s", self.metrics.start_time)
         # And update our last updated time.
         self.last_update = time.time()
 
         pkt = self.factory.parse(buffer)
-        log.debug("TftpContextServer.start() - factory returned a %s" % pkt)
+        log.debug("TftpContextServer.start() - factory returned a %s", pkt)
 
         # Call handle once with the initial packet. This should put us into
         # the download or the upload state.
@@ -232,7 +253,7 @@ class TftpContextServer(TftpContext):
         """Finish up the context."""
         TftpContext.end(self)
         self.metrics.end_time = time.time()
-        log.debug("Set metrics.end_time to %s" % self.metrics.end_time)
+        log.debug("Set metrics.end_time to %s", self.metrics.end_time)
         self.metrics.compute()
 
 class TftpContextClientUpload(TftpContext):
@@ -245,11 +266,13 @@ class TftpContextClientUpload(TftpContext):
                  input,
                  options,
                  packethook,
-                 timeout):
+                 timeout,
+                 localip = ""):
         TftpContext.__init__(self,
                              host,
                              port,
-                             timeout)
+                             timeout,
+                             localip)
         self.file_to_transfer = filename
         self.options = options
         self.packethook = packethook
@@ -294,14 +317,14 @@ class TftpContextClientUpload(TftpContext):
             try:
                 log.debug("State is %s" % self.state)
                 self.cycle()
-            except TftpTimeout, err:
+            except TftpTimeout as err:
                 log.error(str(err))
                 self.retry_count += 1
                 if self.retry_count >= TIMEOUT_RETRIES:
                     log.debug("hit max retries, giving up")
                     raise
                 else:
-                    log.warn("resending last packet")
+                    log.warning("resending last packet")
                     self.state.resendLast()
 
     def end(self):
@@ -310,6 +333,7 @@ class TftpContextClientUpload(TftpContext):
         self.metrics.end_time = time.time()
         log.debug("Set metrics.end_time to %s" % self.metrics.end_time)
         self.metrics.compute()
+
 
 class TftpContextClientDownload(TftpContext):
     """The download context for the client during a download.
@@ -321,22 +345,27 @@ class TftpContextClientDownload(TftpContext):
                  output,
                  options,
                  packethook,
-                 timeout):
+                 timeout,
+                 localip = ""):
         TftpContext.__init__(self,
                              host,
                              port,
-                             timeout)
+                             timeout,
+                             localip)
         # FIXME: should we refactor setting of these params?
         self.file_to_transfer = filename
         self.options = options
         self.packethook = packethook
+        self.filelike_fileobj = False
         # If the output object has a write() function,
         # assume it is file-like.
         if hasattr(output, 'write'):
             self.fileobj = output
+            self.filelike_fileobj = True
         # If the output filename is -, then use stdout
         elif output == '-':
             self.fileobj = sys.stdout
+            self.filelike_fileobj = True
         else:
             self.fileobj = open(output, "wb")
 
@@ -371,19 +400,30 @@ class TftpContextClientDownload(TftpContext):
             try:
                 log.debug("State is %s" % self.state)
                 self.cycle()
-            except TftpTimeout, err:
+            except TftpTimeout as err:
                 log.error(str(err))
                 self.retry_count += 1
                 if self.retry_count >= TIMEOUT_RETRIES:
                     log.debug("hit max retries, giving up")
                     raise
                 else:
-                    log.warn("resending last packet")
+                    log.warning("resending last packet")
                     self.state.resendLast()
+            except TftpFileNotFoundError as err:
+                # If we received file not found, then we should not save the open
+                # output file or we'll be left with a size zero file. Delete it,
+                # if it exists.
+                log.error("Received File not found error")
+                if self.fileobj is not None and not self.filelike_fileobj:
+                    if os.path.exists(self.fileobj.name):
+                        log.debug("unlinking output file of %s", self.fileobj.name)
+                        os.unlink(self.fileobj.name)
+
+                raise
 
     def end(self):
         """Finish up the context."""
-        TftpContext.end(self)
+        TftpContext.end(self, not self.filelike_fileobj)
         self.metrics.end_time = time.time()
         log.debug("Set metrics.end_time to %s" % self.metrics.end_time)
         self.metrics.compute()

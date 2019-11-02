@@ -1,29 +1,36 @@
+# vim: ts=4 sw=4 et ai:
+# -*- coding: utf8 -*-
 """This module implements the TFTP Client functionality. Instantiate an
 instance of the client, and then use its upload or download method. Logging is
 performed via a standard logging object set in TftpShared."""
 
+
 import types
-from TftpShared import *
-from TftpPacketTypes import *
-from TftpContexts import TftpContextClientDownload, TftpContextClientUpload
+import logging
+from .TftpShared import *
+from .TftpPacketTypes import *
+from .TftpContexts import TftpContextClientDownload, TftpContextClientUpload
+
+log = logging.getLogger('tftpy.TftpClient')
 
 class TftpClient(TftpSession):
     """This class is an implementation of a tftp client. Once instantiated, a
     download can be initiated via the download() method, or an upload via the
     upload() method."""
 
-    def __init__(self, host, port, options={}):
+    def __init__(self, host, port=69, options={}, localip = ""):
         TftpSession.__init__(self)
         self.context = None
         self.host = host
         self.iport = port
         self.filename = None
         self.options = options
-        if self.options.has_key('blksize'):
+        self.localip = localip
+        if 'blksize' in self.options:
             size = self.options['blksize']
-            tftpassert(types.IntType == type(size), "blksize must be an int")
+            tftpassert(int == type(size), "blksize must be an int")
             if size < MIN_BLKSIZE or size > MAX_BLKSIZE:
-                raise TftpException, "Invalid blksize: %d" % size
+                raise TftpException("Invalid blksize: %d" % size)
 
     def download(self, filename, output, packethook=None, timeout=SOCK_TIMEOUT):
         """This method initiates a tftp download from the configured remote
@@ -38,17 +45,16 @@ class TftpClient(TftpSession):
         Note: If output is a hyphen, stdout is used."""
         # We're downloading.
         log.debug("Creating download context with the following params:")
-        log.debug("host = %s, port = %s, filename = %s, output = %s"
-            % (self.host, self.iport, filename, output))
-        log.debug("options = %s, packethook = %s, timeout = %s"
-            % (self.options, packethook, timeout))
+        log.debug("host = %s, port = %s, filename = %s" % (self.host, self.iport, filename))
+        log.debug("options = %s, packethook = %s, timeout = %s" % (self.options, packethook, timeout))
         self.context = TftpContextClientDownload(self.host,
                                                  self.iport,
                                                  filename,
                                                  output,
                                                  self.options,
                                                  packethook,
-                                                 timeout)
+                                                 timeout,
+                                                 localip = self.localip)
         self.context.start()
         # Download happens here
         self.context.end()
@@ -82,7 +88,8 @@ class TftpClient(TftpSession):
                                                input,
                                                self.options,
                                                packethook,
-                                               timeout)
+                                               timeout,
+                                               localip = self.localip)
         self.context.start()
         # Upload happens here
         self.context.end()
