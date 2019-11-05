@@ -141,17 +141,8 @@ def generate(switch, model_id):
             )
   # We make the Juniper config a script, to be able to add the crontab.
   if model_id[:7] == "Juniper":
-    cfg_subbed = '''#!/bin/sh
-echo "" > /tmp/dhtech.config
-fullconfig=$(cat << "ENDOFCONFIG"
-''' + cfg_subbed + '''
-ENDOFCONFIG
-)
-echo "$fullconfig" >> /tmp/dhtech.config
-echo '@reboot sleep 30; cli -c "configure private;set chassis auto-image-upgrade;commit"' > /tmp/dhtech.cron
-crontab /tmp/dhtech.cron
-cli -c "configure private;delete;load merge /tmp/dhtech.config;commit"
-'''
+	  jcfg = tempita.Template(file('juniper.sh.template').read())
+	  cfg_subbed = jcfg.substitute(config=cfg_subbed)
   return cfg_subbed
 
 def parse_metadata(switch):
