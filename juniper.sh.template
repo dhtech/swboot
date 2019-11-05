@@ -1,0 +1,10 @@
+#!/bin/sh
+
+fullconfig=$(cat << "ENDOFCONFIG"
+{{config}}
+ENDOFCONFIG
+)
+echo "$fullconfig" > /tmp/dhtech.config
+echo '@reboot sleep 30; cli -c "configure private;set chassis auto-image-upgrade;commit"' > /tmp/dhtech.cron
+crontab /tmp/dhtech.cron
+cli -c "configure private;delete;load merge /tmp/dhtech.config;commit"
