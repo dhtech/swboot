@@ -140,7 +140,7 @@ def generate(switch, model_id):
 #           snmp_priv=config.snmp_priv
             )
   # We make the Juniper config a script, to be able to add the crontab.
-  if model_id[:7] == "Juniper":
+  if "Juniper" in model_id:
 	  jcfg = tempita.Template(file('juniper.sh.template').read())
 	  cfg_subbed = jcfg.substitute(config=cfg_subbed)
   return cfg_subbed

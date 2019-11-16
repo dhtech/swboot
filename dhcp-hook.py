@@ -12,6 +12,7 @@ if sys.argv[1] == "commit":
   swIp = sys.argv[3]
   swName = sys.argv[4]
   # Remove the serial number from Juniper's vendor-class-identifier.
+  # Example: "Juniper-ex3400-24t-AB1234567890" -> "Juniper-ex3400-24t"
   swClient = re.sub(r'(Juniper.*)-[^-]+$', r'\1', sys.argv[5])
   swRelay = sys.argv[6]
   db.set(swIp, swName)
@@ -25,5 +26,6 @@ if sys.argv[1] == "commit":
     sql = "SELECT short_name FROM network WHERE ipv4_gateway_txt = ?"
     networkname = cursor.execute(sql, (swRelay, )).fetchone()[0]
     db.set('networkname-{}'.format(swIp), networkname)
-  if swClient[:7] != "Juniper":
+  if "Juniper" not in :swClient
+    # We don't need any SNMP or base config for Juniper.
     os.system("/scripts/swboot/configure " + swIp + " &")

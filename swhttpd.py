@@ -49,6 +49,7 @@ class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
       log("Sending JunOS file", config.models[model]['image'], "to",
         self.client_address[0], "name =", switch)
       if (model in config.models) and ('image' in config.models[model]):
+        # All good! Overwrite the requested file path and send our own.
         self.path = config.models[model]['image']
         f = self.send_head()
         if f:
@@ -67,20 +68,19 @@ class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 class swbootTCPServer(SocketServer.ForkingTCPServer):
   def server_bind(self):
-    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     self.socket.bind(self.server_address)
 
 log("swhttpd started")
 
 try:
-  httpd = swbootTCPServer(("0.0.0.0", 80), swbootHttpHandler)
+  httpd = swbootTCPServer(("", 80), swbootHttpHandler)
   httpd.serve_forever()
 except socket.error, err:
   sys.stderr.write("Socket error: %s\n" % str(err))
   sys.exit(1)
 except KeyboardInterrupt:
   sys.stderr.write("\n")
-except:
-  sys.stderr.write('Something went wrong: %2' % sys.exc_info()[0])
+except Exception, err:
+  sys.stderr.write("Something went wrong: %s\n" % err)
 
 
