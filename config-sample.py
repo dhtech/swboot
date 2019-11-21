@@ -27,15 +27,6 @@ snmp_salt = ""
 #snmp_priv = ""
 wifi_vlanid = yaml_conf['wifi']['vlan_id']
 
-# Enable this if we cannot set special option82 tags
-franken_net_switches = [ ]
-
-# If you have franken net, you need snmpv3 credentials to dist
-# NOTE: THERE IS NO NEED TO USE THIS IF is_franken_net == False
-snmpv3_username = ''
-snmpv3_auth = ''
-snmpv3_priv = ''
-
 models = {}
 for model in yaml_conf['models']:
   data = bunch(template=model['path'],eth=model['ports'])

@@ -23,7 +23,6 @@ class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     file_handle = swcommon.select_file(self.path.lstrip("/"), self.client_address[0])
 
     if file_handle == None:
-      log("Switch not found:", self.client_address[0])
       self.send_error(404, "File not found")
       return None
 
@@ -46,7 +45,6 @@ class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 class swbootTCPServer(SocketServer.ForkingTCPServer):
   def server_bind(self):
-    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     self.socket.bind(self.server_address)
 
 try:

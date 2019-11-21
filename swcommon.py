@@ -47,7 +47,7 @@ def generate(out, ip, switch):
 
   if not model in config.models:
     sw_reload(ip)
-    error("Template for model " + model_id + " not found")
+    error("Template for model", model_id, "not found")
     return
 
   # Throws exception if something bad happens
@@ -78,7 +78,7 @@ def select_file(file_to_transfer, ip):
     error('No record of switch', ip, 'in Redis, ignoring ..')
     return None
 
-  log('Switch is ', switch)
+  log('Switch is', switch)
   db.set('switchname-%s' % ip, switch)
   
   model = db.get('client-{}'.format(ip))
@@ -94,7 +94,7 @@ def select_file(file_to_transfer, ip):
       log("Sending config to", switch)
       f = open('distconfig/%s' % switch[5:])
       return f
-    error('Dist config not found', ip)
+    error('Dist config not found for', ip)
     return None
 
   # Juniper config.

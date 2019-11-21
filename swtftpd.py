@@ -1,19 +1,11 @@
 #!/usr/bin/env python
 import sys, logging
 import tftpy
-import tempfile
-import redis
 import syslog
-import netsnmp
-import traceback
-import re
-import os
 import time
 
 import config
 import swcommon
-
-db = redis.Redis()
 
 def log(*args):
   print time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args)
@@ -27,8 +19,11 @@ def file_callback(file_to_transfer, raddress, rport):
   return swcommon.select_file(file_to_transfer, raddress)
 
 server = tftpy.TftpServer('/scripts/swboot/ios', file_callback)
-tftplog = logging.getLogger('tftpy.TftpClient')
-tftplog.setLevel(logging.WARN)
+
+# TFTPD logging not needed in production, we have our own functions.
+tftplog = logging.getLogger('tftpy')
+tftplog.addHandler(logging.NullHandler())
+
 log("swtftpd started")
 try:
   server.listen("", 69)
