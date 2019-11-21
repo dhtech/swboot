@@ -83,11 +83,12 @@ def select_file(file_to_transfer, ip):
   
   model = db.get('client-{}'.format(ip))
 
-  if not re.match('^([A-Z]{1,2}[0-9][0-9]-[A-C]|DIST:[A-Z]-[A-Z]-[A-Z]+-S[TW])$', switch):
+  if not re.match('^([A-Z]{1,2}[0-9][0-9]-[A-C]|DIST:[A-Z]{1,2}-[A-Z]-[A-Z]+-S[TW])$', switch):
     sw_reload(ip)
-    error("Switch", ip, "does not match regexp, invalid option 82? Received ", switch, " as option 82")
+    error("Switch", ip, "does not match regexp, invalid option 82? Received '", switch, "' as option 82")
     return None
 
+  # Dist config.
   if "DIST:" in switch and file_to_transfer.lower().endswith("-confg"):
     if re.match(r'^[a-zA-Z0-9:-]+$', switch) and os.path.isfile('distconfig/%s' % switch[5:]):
       log("Sending config to", switch)
@@ -96,6 +97,7 @@ def select_file(file_to_transfer, ip):
     error('Dist config not found', ip)
     return None
 
+  # Juniper config.
   if file_to_transfer == "juniper-confg":
     log("Generating Juniper config for", ip, "name =", switch)
     f = tempfile.TemporaryFile()
@@ -103,6 +105,7 @@ def select_file(file_to_transfer, ip):
     f.seek(0)
     return f
 
+  # Switch base config.
   if (file_to_transfer == "network-confg" or
       file_to_transfer == "Switch-confg"):
     log("Generating config for", ip, "name =", switch)
@@ -111,12 +114,14 @@ def select_file(file_to_transfer, ip):
     f.seek(0)
     return f
 
+  # Juniper image.
   if file_to_transfer == "juniper.tgz":
     if (model in config.models) and ('image' in config.models[model]):
       log("Sending JunOS image to ", ip, "name =", switch)
       return file(config.models[model]['image'])
     log("Missing image file for", ip, "name =", switch)
 
+  # Final config for non-Juniper switches.
   if file_to_transfer.lower().endswith("-confg"):
     f = tempfile.TemporaryFile()
     log("Generating config for", ip,"config =", switch)

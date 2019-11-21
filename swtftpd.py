@@ -26,10 +26,10 @@ def error(*args):
 def file_callback(file_to_transfer, raddress, rport):
   return swcommon.select_file(file_to_transfer, raddress)
 
-log("swtftpd started")
 server = tftpy.TftpServer('/scripts/swboot/ios', file_callback)
 tftplog = logging.getLogger('tftpy.TftpClient')
 tftplog.setLevel(logging.WARN)
+log("swtftpd started")
 try:
   server.listen("", 69)
 except tftpy.TftpException, err:

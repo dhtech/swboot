@@ -49,10 +49,9 @@ class swbootTCPServer(SocketServer.ForkingTCPServer):
     self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     self.socket.bind(self.server_address)
 
-log("swhttpd started")
-
 try:
   httpd = swbootTCPServer(("", 80), swbootHttpHandler)
+  log("swhttpd started")
   httpd.serve_forever()
 except socket.error, err:
   sys.stderr.write("Socket error: %s\n" % str(err))
