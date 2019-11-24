@@ -5,21 +5,21 @@ import syslog
 import socket
 import re
 import tempfile
-import SimpleHTTPServer
-import SocketServer
+import http.server
+import socketserver
 import time
 
 import config
 
 def log(*args):
-  print time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args)
+  print(time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args))
   syslog.syslog(syslog.LOG_INFO, ' '.join(args))
 
 def error(*args):
-  print time.strftime("%Y-%m-%d %H:%M:%S") + ': ERROR:', ' '.join(args)
+  print(time.strftime("%Y-%m-%d %H:%M:%S") + ': ERROR:', ' '.join(args))
   syslog.syslog(syslog.LOG_ERR, ' '.join(args))
 
-class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
   def do_GET(self):
     db = redis.Redis()
     switch = db.get(self.client_address[0])
@@ -66,7 +66,7 @@ class swbootHttpHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
   def log_error(self, format, *args):
     pass
 
-class swbootTCPServer(SocketServer.ForkingTCPServer):
+class swbootTCPServer(socketserver.ForkingTCPServer):
   def server_bind(self):
     self.socket.bind(self.server_address)
 
@@ -75,12 +75,12 @@ log("swhttpd started")
 try:
   httpd = swbootTCPServer(("", 80), swbootHttpHandler)
   httpd.serve_forever()
-except socket.error, err:
+except socket.error as err:
   sys.stderr.write("Socket error: %s\n" % str(err))
   sys.exit(1)
 except KeyboardInterrupt:
   sys.stderr.write("\n")
-except Exception, err:
+except Exception as err:
   sys.stderr.write("Something went wrong: %s\n" % err)
 
 

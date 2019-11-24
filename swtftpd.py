@@ -15,11 +15,11 @@ import config
 db = redis.Redis()
 
 def log(*args):
-  print time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args)
+  print(time.strftime("%Y-%m-%d %H:%M:%S") + ':', ' '.join(args))
   syslog.syslog(syslog.LOG_INFO, ' '.join(args))
 
 def error(*args):
-  print time.strftime("%Y-%m-%d %H:%M:%S") + ': ERROR:', ' '.join(args)
+  print(time.strftime("%Y-%m-%d %H:%M:%S") + ': ERROR:', ' '.join(args))
   syslog.syslog(syslog.LOG_ERR, ' '.join(args))
 
 def sw_reload(ip):
@@ -33,7 +33,7 @@ def generate(out, ip, switch):
   model = db.get('client-{}'.format(ip))
   if model == None:
     # Get Cisco model name (two tries)
-    for i in xrange(2):
+    for i in range(2):
       var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1')
       model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
 
@@ -78,11 +78,11 @@ def snmpv3_command(var, host, cmd):
 def resolve_option82(relay, option82):
   module = int(option82[0], 16)
   port = int(option82[1], 16)
-  print 'Switch on "%s" attached to module "%s" and port "%s"' % (
-      relay, module, port)
+  print('Switch on "%s" attached to module "%s" and port "%s"' % (
+      relay, module, port))
   var = netsnmp.VarList(netsnmp.Varbind('.1.3.6.1.2.1.31.1.1.1.1'))
   if snmpv3_command(var, relay, netsnmp.snmpwalk) is None:
-    print 'ERROR: Unable to talk to relay "%s" for description lookup' % relay
+    print('ERROR: Unable to talk to relay "%s" for description lookup' % relay)
     return None
 
   for result in var:
@@ -90,7 +90,7 @@ def resolve_option82(relay, option82):
     name = result.val
     if (name == 'Gi%d/%d' % (module, port) or
         name == 'Gi%d/0/%d' % (module, port)):
-      print 'Found switch on interface "%s"' % name
+      print('Found switch on interface "%s"' % name)
       var = netsnmp.Varbind(
         '.1.3.6.1.4.1.9.2.2.1.1.28.%d' % int(iface))
       return snmpv3_command(var, relay, netsnmp.snmpget)[0][6:]
@@ -129,7 +129,7 @@ def file_callback(file_to_transfer, ip, rport):
     error('Unable to identifiy switch', ip)
     return None
     
-  print 'Switch is "%s"' % switch
+  print('Switch is "%s"' % switch)
   db.set('switchname-%s' % ip, switch)
 
   if (file_to_transfer == "network-confg" or
@@ -171,7 +171,7 @@ tftplog = logging.getLogger('tftpy.TftpClient')
 tftplog.setLevel(logging.WARN)
 try:
   server.listen("192.168.40.10", 69)
-except tftpy.TftpException, err:
+except tftpy.TftpException as err:
   sys.stderr.write("%s\n" % str(err))
   sys.exit(1)
 except KeyboardInterrupt:

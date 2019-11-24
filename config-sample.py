@@ -8,7 +8,7 @@ from tempita import bunch
 from collections import namedtuple
 import hashlib
 
-f = file('switchconfig/config.yaml', 'r')
+f = open('switchconfig/config.yaml', 'r')
 yaml_conf = yaml.load(f)
 
 # Note: To add new variables, the generate function will need to 
@@ -173,6 +173,6 @@ AND h.name = s.switch_name AND n_mgmt.node_id = h.network_id'''
 if __name__ == '__main__':
   if len(sys.argv) == 3 and sys.argv[1] == 'dump-snmp-rw':
     mgmt, _ = parse_metadata(sys.argv[2])
-    print hashlib.sha1(config.snmp_salt + mgmt['ip']).hexdigest()
+    print(hashlib.sha1(config.snmp_salt + mgmt['ip']).hexdigest())
   else:
-    print generate("D23-A", "WS-C2950T-24")
+    print(generate("D23-A", "WS-C2950T-24"))
