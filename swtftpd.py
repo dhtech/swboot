@@ -166,7 +166,7 @@ def file_callback(file_to_transfer, ip, rport):
   return f
 
 log("swtftpd started")
-server = tftpy.TftpServer('/scripts/swboot/ios', file_callback)
+server = tftpy.TftpServer('/srv/tftp', file_callback)
 tftplog = logging.getLogger('tftpy.TftpClient')
 tftplog.setLevel(logging.WARN)
 try:
