@@ -30,7 +30,7 @@ def sw_reload(ip):
     error("Exception in reload:", traceback.format_exc())
 
 def generate(out, ip, switch):
-  model = db.get('client-{}'.format(ip))
+  model = db.get('client-{}'.format(ip)).decode()
   if model == None:
     # Get Cisco model name (two tries)
     for i in range(2):
@@ -48,13 +48,13 @@ def generate(out, ip, switch):
 
   if not model in config.models:
     sw_reload(ip)
-    error("Template for model " + model_id + " not found")
+    error("Template for model " + model + " not found")
     return
 
   # Throws exception if something bad happens
   try:
     txt = config.generate(switch, model)
-    out.write(txt)
+    out.write(txt.encode())
   except:
     sw_reload(ip)
     error("Exception in generation for %s :" % switch, traceback.format_exc())
@@ -64,10 +64,10 @@ def generate(out, ip, switch):
   return out
   
 def base(out, switch):
-  out.write("snmp-server community private rw\n")
-  out.write("hostname BASE\n")
-  out.write("no vlan 2-4094\n")
-  out.write("end\n\n")
+  out.write("snmp-server community private rw\n".encode())
+  out.write("hostname BASE\n".encode())
+  out.write("no vlan 2-4094\n".encode())
+  out.write("end\n\n".encode())
 
 def snmpv3_command(var, host, cmd):
   return cmd(var, Version=3, DestHost=host,
@@ -95,14 +95,14 @@ def resolve_option82(relay, option82):
         '.1.3.6.1.4.1.9.2.2.1.1.28.%d' % int(iface))
       return snmpv3_command(var, relay, netsnmp.snmpget)[0][6:]
 
-def file_callback(file_to_transfer, ip, rport):
+def file_callback(file_to_transfer, raddress, rport):
   if file_to_transfer in config.static_files:
     return file(config.static_files[file_to_transfer])
 
   global db
-  option82 = db.get(ip)
+  option82 = db.get(raddress).decode()
   if option82 is None:
-    error('No record of switch', ip, 'in Redis, ignoring ..')
+    error('No record of switch', raddress, 'in Redis, ignoring ..')
     return None
 
   # If we do not have any franken switches, do not execute this horrible code path
@@ -112,7 +112,7 @@ def file_callback(file_to_transfer, ip, rport):
     # In this sad universe we have switches with different capabilities, so we
     # need to figure out who sent the request. We use the Gateway Address
     # (a.k.a. relay address) for this.
-    relay = db.get('relay-%s' % ip)
+    relay = db.get('relay-%s' % raddress).decode()
     if relay not in config.franken_net_switches:
       # Puh, cris averted - not a franken switch.
       switch = option82
@@ -121,43 +121,43 @@ def file_callback(file_to_transfer, ip, rport):
       # be the case anymore, but used to happen when dhcp-hook didn't filter
       # this.
       if relay == '0.0.0.0':
-        error('Ignoring non-relayed DHCP request from', ip)
+        error('Ignoring non-relayed DHCP request from', raddress)
         return None
       switch = resolve_option82(relay, option82.split(':'))
 
   if switch is None:
-    error('Unable to identifiy switch', ip)
+    error('Unable to identifiy switch', raddress)
     return None
     
   print('Switch is "%s"' % switch)
-  db.set('switchname-%s' % ip, switch)
+  db.set('switchname-%s' % raddress, switch)
 
   if (file_to_transfer == "network-confg" or
       file_to_transfer == "Switch-confg"):
     f = tempfile.TemporaryFile()
     log("Generating base config", file_to_transfer,
-        "for", ip,"config =", switch)
+        "for", raddress,"config =", switch)
     base(f, switch)
     f.seek(0)
     return f
 
   if file_to_transfer == "juniper.tgz":
-    model = db.get('client-{}'.format(ip))
+    model = db.get('client-{}'.format(raddress)).decode()
     if (model in config.models) and ('image' in config.models[model]):
       return file(config.models[model]['image'])
 
   if not re.match('[A-Z]{1,2}[0-9][0-9]-[A-C]', switch):
-    sw_reload(ip)
-    error("Switch", ip, "does not match regexp, invalid option 82? Received ", option82, " as option 82")
+    sw_reload(raddress)
+    error("Switch", raddress, "does not match regexp, invalid option 82? Received ", option82, " as option 82")
     return None
 
   f = tempfile.TemporaryFile()
   if file_to_transfer.lower().endswith("-confg"):
-    log("Generating config for", ip,"config =", switch)
-    if generate(f, ip, switch) == None:
+    log("Generating config for", raddress,"config =", switch)
+    if generate(f, raddress, switch) == None:
       return None
   else:
-    error("Switch", ip, "config =", switch, "tried to get file",
+    error("Switch", raddress, "config =", switch, "tried to get file",
         file_to_transfer)
     f.close()
     return None

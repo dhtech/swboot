@@ -22,8 +22,8 @@ def error(*args):
 class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
   def do_GET(self):
     db = redis.Redis()
-    switch = db.get(self.client_address[0])
-    model = db.get('client-{}'.format(self.client_address[0]))
+    switch = db.get(self.client_address[0]).decode()
+    model = db.get('client-{}'.format(self.client_address[0])).decode()
     if switch == None or model == None:
       log("Switch not found:", self.client_address[0])
       self.send_error(404, "File not found")
@@ -32,7 +32,7 @@ class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
       log("Generating Juniper config for",
           self.client_address[0], "name =", switch)
       f = tempfile.TemporaryFile()
-      f.write(config.generate(switch, model))
+      f.write(config.generate(switch, model).encode())
       content_length = f.tell()
       f.seek(0)
 
