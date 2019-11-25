@@ -117,7 +117,7 @@ def generate(switch, model_id):
   #
   # Template function definition
   #
-  cfg = tempita.Template(file(model.template).read())
+  cfg = tempita.Template(open(model.template).read())
   cfg_subbed = cfg.substitute(
             hostname=switch,
             model=model,
@@ -133,7 +133,7 @@ def generate(switch, model_id):
             enable=config.enable,
             radius=config.radius,
             snmp_ro=config.snmp_ro,
-            snmp_rw=hashlib.sha1(config.snmp_salt + mgmt['ip']).hexdigest(),
+            snmp_rw=hashlib.sha1((config.snmp_salt + mgmt['ip']).encode()).hexdigest(),
             ipplan_host=lambda h: ipplan_host(h),
             ipplan_pkg=lambda p: ipplan_package(p),
 #           snmp_user=config.snmp_user,
@@ -142,7 +142,7 @@ def generate(switch, model_id):
             )
   # We make the Juniper config a script, to be able to add the crontab.
   if "Juniper" in model_id:
-	  jcfg = tempita.Template(file('juniper.sh.template').read())
+	  jcfg = tempita.Template(open('juniper.sh.template').read())
 	  cfg_subbed = jcfg.substitute(config=cfg_subbed)
   return cfg_subbed
 
