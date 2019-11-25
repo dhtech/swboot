@@ -166,7 +166,7 @@ AND h.name = s.switch_name AND n_mgmt.node_id = h.network_id'''
   mgmt = {}
   mgmt['ip'] = mgmt_ip
   mgmt['mask'] = str(network.netmask())
-  mgmt['mask_cidr'] = str(network.netmask())
+  mgmt['mask_cidr'] = str(network.subnet())
   mgmt['gw'] = str(network.host_first())
   mgmt['vlanid'] = mgmt_vlan
 
