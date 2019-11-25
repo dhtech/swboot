@@ -31,7 +31,7 @@ def sw_reload(ip):
 
 def generate(out, ip, switch):
   model = db.get('client-{}'.format(ip)).decode()
-  if model == None:
+  if model == 'cisco':
     # Get Cisco model name (two tries)
     for i in range(2):
       var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1')
