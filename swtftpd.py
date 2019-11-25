@@ -40,6 +40,7 @@ def generate(out, ip, switch):
       if model == None:
         var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1001')
         model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
+    model = None if model is None else model.decode()
     
   if model == None:
     sw_reload(ip)
