@@ -9,7 +9,7 @@ from collections import namedtuple
 import hashlib
 
 f = open('switchconfig/config.yaml', 'r')
-yaml_conf = yaml.load(f)
+yaml_conf = yaml.safe_load(f)
 
 # Note: To add new variables, the generate function will need to 
 # be modified as well
