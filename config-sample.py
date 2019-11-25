@@ -123,6 +123,7 @@ def generate(switch, model_id):
             model=model,
             mgmt_ip=mgmt['ip'],
             mgmt_mask=mgmt['mask'],
+            mgmt_mask_cidr=mgmt['mask_cidr'],
             mgmt_gw=mgmt['gw'],
             mgmt_vlanid=mgmt['vlanid'],
             vlanid=vlanid,
@@ -165,6 +166,7 @@ AND h.name = s.switch_name AND n_mgmt.node_id = h.network_id'''
   mgmt = {}
   mgmt['ip'] = mgmt_ip
   mgmt['mask'] = str(network.netmask())
+  mgmt['mask_cidr'] = str(network.netmask())
   mgmt['gw'] = str(network.host_first())
   mgmt['vlanid'] = mgmt_vlan
 
