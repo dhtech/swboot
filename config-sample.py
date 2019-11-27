@@ -10,7 +10,7 @@ from collections import namedtuple
 from passlib.hash import sha512_crypt
 import hashlib
 
-f = open('/scripts/swboot/switchconfig/config.yaml', 'r')
+f = open(os.path.join(os.path.dirname(sys.argv[0]), '/scripts/swboot/switchconfig/config.yaml'), 'r')
 yaml_conf = yaml.safe_load(f)
 
 # Note: To add new variables, the generate function will need to 
