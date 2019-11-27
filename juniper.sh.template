@@ -5,6 +5,6 @@ fullconfig=$(cat << "ENDOFCONFIG"
 ENDOFCONFIG
 )
 echo "$fullconfig" > /tmp/dhtech.config
-echo '@reboot sleep 30; cli -c "configure private;set chassis auto-image-upgrade;commit"' > /tmp/dhtech.cron
+echo '@reboot sleep 30; cli -c "configure private;set chassis auto-image-upgrade;delete vlans management l3-interface;set vlans default l3-interface irb.0;commit"' > /tmp/dhtech.cron
 crontab /tmp/dhtech.cron
 cli -c "configure private;delete;load merge /tmp/dhtech.config;commit"
