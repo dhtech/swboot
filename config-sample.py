@@ -2,13 +2,15 @@ import config
 import ipcalc
 import sqlite3
 import sys
+import os
 import tempita
 import yaml
 from tempita import bunch
 from collections import namedtuple
+from passlib.hash import sha512_crypt
 import hashlib
 
-f = open('switchconfig/config.yaml', 'r')
+f = open('/scripts/swboot/switchconfig/config.yaml', 'r')
 yaml_conf = yaml.safe_load(f)
 
 # Note: To add new variables, the generate function will need to 
@@ -130,7 +132,9 @@ def generate(switch, model_id):
             wifi_switches=config.wifi_switches,
             wifi_vlanid=config.wifi_vlanid,
             password=config.password,
+            password_sha512=sha512_crypt.hash(config.password),
             enable=config.enable,
+            enable_sha512=sha512_crypt.hash(config.enable),
             radius=config.radius,
             snmp_ro=config.snmp_ro,
             snmp_rw=hashlib.sha1((config.snmp_salt + mgmt['ip']).encode()).hexdigest(),
@@ -142,8 +146,8 @@ def generate(switch, model_id):
             )
   # We make the Juniper config a script, to be able to add the crontab.
   if "Juniper" in model_id:
-	  jcfg = tempita.Template(open('juniper.sh.template').read())
-	  cfg_subbed = jcfg.substitute(config=cfg_subbed)
+    jcfg = tempita.Template(open(os.path.join(os.path.dirname(sys.argv[0]), 'juniper.sh.template')).read())
+    cfg_subbed = jcfg.substitute(config=cfg_subbed)
   return cfg_subbed
 
 def parse_metadata(switch):
