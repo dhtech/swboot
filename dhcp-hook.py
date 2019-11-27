@@ -11,8 +11,8 @@ if sys.argv[1] == "commit":
   swMac = sys.argv[2]
   swIp = sys.argv[3]
   # Remove the VLAN name from Juniper's name.
-  # Example: "D55-A:667" -> "D55-A"
-  swName = re.sub(r'([^:]+):.*$', r'\1', sys.argv[4])
+  # Example: "BORD; D55-A:667" -> "D55-A"
+  swName = re.sub(r'BORD; ([^:]+):.*$', r'\1', sys.argv[4])
   # Remove the serial number from Juniper's vendor-class-identifier.
   # Example: "Juniper-ex3400-24t-AB1234567890" -> "Juniper-ex3400-24t"
   swClient = re.sub(r'(Juniper.*)-[^-]+$', r'\1', sys.argv[5])
