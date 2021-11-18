@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import config
 import ipcalc
 import sqlite3

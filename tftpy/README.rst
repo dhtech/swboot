@@ -1,4 +1,25 @@
-Copyright, Michael P. Soulier, 2010.
+Copyright, Michael P. Soulier, 2010-2021.
+
+Note: ChangeLog produced with python's git-changelog
+
+About Release 0.8.2:
+====================
+
+Bugfix release:
+
+- / hardcoded making problems for windows users
+
+About Release 0.8.1:
+====================
+
+Bugfix release:
+
+- replace deprecated log.warn( with log.warning(
+- fixing a security issue in breaking out of the tftproot
+- setup with setuptools instead of distutils.
+- allow overriding select timeout in listen
+- fixing reading binary data from stdin on multiple platforms
+- defaulting Makefile to python3 interpreter
 
 About Release 0.8.0:
 ====================
@@ -41,7 +62,7 @@ Now fully implements downloading and uploading.
 
 About Release 0.4.6:
 ====================
-Feature release to add the tsize option. 
+Feature release to add the tsize option.
 Thanks to Kuba Kończyk for the patch.
 
 About Release 0.4.5:
