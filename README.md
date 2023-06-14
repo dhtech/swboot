@@ -5,7 +5,8 @@ On-demand switch configuration system.
 License is GPLv3 if nothing else is stated.
 
 ## Dependencies
-    sudo apt-get install redis-server python-redis libsnmp-python python-tempita python-ipcalc python-yaml isc-dhcp-server snmp
+    sudo apt-get install redis-server python3-redis libsnmp-dev python3-tempita python3-ipcalc python3-yaml isc-dhcp-server snmp python3-pip build-essential python3-dev python3-six python3-wheel
+    pip3 install python3-netsnmp ipcalc passlib
 
 ## Config
     sudo /sbin/ifconfig eth1 inet 192.168.8.10 netmask 255.255.255.0
@@ -17,10 +18,10 @@ License is GPLv3 if nothing else is stated.
     include "/scripts/swboot/dhcpd.conf";
 
 ## Start swtftpd
-    sudo python swtftpd.py
+    sudo python3 swtftpd.py
 
 ## Test generation of configuration
-    python generate.py D20-A WS-C2950T-24
+    python3 generate.py D20-A WS-C2950T-24
 
 ## Boot procedure
 
