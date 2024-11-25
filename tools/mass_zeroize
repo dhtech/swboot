@@ -1,0 +1,21 @@
+#!/bin/bash
+
+pattern="${1}%"
+# get user/pass for switch login
+read -p "Username: " username
+read -s -p "Password: " password
+# set SSHPASS password
+echo ""
+for row in $(sqlite3 /etc/ipplan.db "SELECT host.ipv4_addr_txt, host.name FROM host, option WHERE host.node_id = option.node_id AND option.name = 'layer' AND option.value = 'access' AND host.name LIKE '${pattern}'")
+do
+  ip=$(echo $row | cut -f 1 -d '|')
+  name=$(echo $row | cut -f 2 -d '|')
+  echo "Wiping $name"
+  # "show version | no-more"
+  timeout 10 sshpass -p $password ssh -o StrictHostKeyChecking=no $username@$name << EOF
+request system zeroize
+yes
+exit
+EOF
+done
+# unset SSHPASS
