@@ -147,7 +147,7 @@ def file_callback(file_to_transfer, raddress, rport):
     if (model in config.models) and ('image' in config.models[model]):
       return file(config.models[model]['image'])
 
-  if not re.match('[A-Z]{1,2}[0-9][0-9]-[A-C]', switch):
+  if not re.match('[A-Z]+[0-9][0-9]-[A-C]', switch):
     sw_reload(raddress)
     error("Switch", raddress, "does not match regexp, invalid option 82? Received ", option82, " as option 82")
     return None
