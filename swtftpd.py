@@ -147,6 +147,20 @@ def file_callback(file_to_transfer, raddress, rport):
     if (model in config.models) and ('image' in config.models[model]):
       return file(config.models[model]['image'])
 
+  sw_type = db.get('type-%s' % raddress).decode()
+  if sw_type and sw_type == "ACCESS":
+    if file_to_transfer.lower().endswith("-confg"):
+      with open(config.static_configs."/".switch.".txt") as s:
+        f = tempfile.TemporaryFile()
+        log("Sending static config for", raddress,"config =", switch)
+        for line in s:
+          f.write(line)
+        f.seek(0)
+        return f
+    else:
+        error("Unknown file to transfer for switch ",switch)
+        return None
+
   if not re.match('[A-Z]+[0-9][0-9]-[A-C]', switch):
     sw_reload(raddress)
     error("Switch", raddress, "does not match regexp, invalid option 82? Received ", option82, " as option 82")

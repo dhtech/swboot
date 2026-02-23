@@ -54,6 +54,11 @@ static_files = {}
 for sf in yaml_conf['static_files']:
   static_files.update(sf)
 
+# Folder containing static configurations to be served as-is by switchboot (ACCESS;)
+static_configs = None
+if "static_configs" in yaml_conf:
+    static_configs = yaml_conf["static_configs"]
+
 
 # ===============================================================
 # Do not change below this if you do not know what you're doing!

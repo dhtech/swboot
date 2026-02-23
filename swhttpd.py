@@ -24,6 +24,7 @@ class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
     db = redis.Redis()
     switch = db.get(self.client_address[0]).decode()
     model = db.get('client-{}'.format(self.client_address[0])).decode()
+    sw_type = db.get('type-{}'.format(self.client_address[0])).decode()
     if switch == None or model == None:
       log("Switch not found:", self.client_address[0])
       self.send_error(404, "File not found")
@@ -32,7 +33,13 @@ class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
       log("Generating Juniper config for",
           self.client_address[0], "name =", switch)
       f = tempfile.TemporaryFile()
-      f.write(config.generate(switch, model).encode())
+      if not sw_type or sw_type == "TABLE":
+          f.write(config.generate(switch, model).encode())
+      elif sw_type == "ACCESS":
+          with open(config.static_configs."/".switch.".txt") as s:
+              for line in s:
+                  f.write(line)
+
       content_length = f.tell()
       f.seek(0)
 
