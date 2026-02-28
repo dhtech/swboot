@@ -36,9 +36,9 @@ class swbootHttpHandler(http.server.SimpleHTTPRequestHandler):
       if not sw_type or sw_type == "TABLE":
           f.write(config.generate(switch, model).encode())
       elif sw_type == "ACCESS":
-          with open(config.static_configs."/".switch.".txt") as s:
+          with open(config.static_configs + "/" + switch + ".txt", "rt") as s:
               for line in s:
-                  f.write(line)
+                  f.write(line.encode())
 
       content_length = f.tell()
       f.seek(0)
