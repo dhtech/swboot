@@ -10,9 +10,15 @@ db = redis.Redis()
 if sys.argv[1] == "commit":
   swMac = sys.argv[2]
   swIp = sys.argv[3]
-  # Remove the VLAN name from Juniper's name.
-  # Example: "TABLE; D55-A:667" -> "D55-A"
-  swName = re.sub(r'TABLE; ([^:]+):.*$', r'\1', sys.argv[4])
+  #Parse switch type + remove vlan from the circuit ID
+  #Example : "TABLE; D55-A:667" -> "TABLE" "D55-A"
+  m = re.search(r"^([^;]+);\s([^:]+):.*$", sys.argv[4])
+  if m:
+    swType = m.group(1)
+    swName = m.group(2)
+    db.set('type-{}'.format(swIp), swType)
+  else:
+    swName = sys.argv[4]
   # Remove the serial number from Juniper's vendor-class-identifier.
   # Example: "Juniper-ex3400-24t-AB1234567890" -> "Juniper-ex3400-24t"
   swClient = re.sub(r'(Juniper.*)-[^-]+$', r'\1', sys.argv[5])
