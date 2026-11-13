@@ -12,6 +12,9 @@ import time
 
 import config
 
+# where swboot is installed: its helpers (reload, configure) are beside this file
+HERE = os.path.dirname(os.path.abspath(__file__))
+
 db = redis.Redis()
 
 def log(*args):
@@ -25,7 +28,7 @@ def error(*args):
 def sw_reload(ip):
   error("Reloading switch")
   try:
-    os.system("/scripts/swboot/reload " + ip + " &")
+    os.system(os.path.join(HERE, "reload") + " " + ip + " &")
   except:
     error("Exception in reload:", traceback.format_exc())
 

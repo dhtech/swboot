@@ -6,6 +6,9 @@ import re
 
 import ipplan
 
+# where swboot is installed: its helpers (reload, configure) are beside this file
+HERE = os.path.dirname(os.path.abspath(__file__))
+
 db = redis.Redis()
 
 if sys.argv[1] == "commit":
@@ -41,4 +44,4 @@ if sys.argv[1] == "commit":
       db.set('networkname-{}'.format(swIp), networkname)
   if "Juniper" not in swClient:
     # We don't need any SNMP or base config for Juniper.
-    os.system("/scripts/swboot/configure " + swIp + " &")
+    os.system(os.path.join(HERE, "configure") + " " + swIp + " &")

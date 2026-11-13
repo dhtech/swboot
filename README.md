@@ -24,7 +24,7 @@ salt) are read from `/etc/swboot/secrets.json` (see `swsecrets.py`),
 not written into `config.py`.
 
 ## dhcpd.conf
-    include "/scripts/swboot/dhcpd.conf";
+    include "/opt/swboot/dhcpd.conf";
 
 ## Start swtftpd
     sudo python3 swtftpd.py
