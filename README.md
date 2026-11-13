@@ -14,6 +14,10 @@ License is GPLv3 if nothing else is stated.
 ## Install
     cp config-sample.py config.py
 
+The secrets (radius key, login, enable password, SNMP community and
+salt) are read from `/etc/swboot/secrets.json` (see `swsecrets.py`),
+not written into `config.py`.
+
 ## dhcpd.conf
     include "/scripts/swboot/dhcpd.conf";
 

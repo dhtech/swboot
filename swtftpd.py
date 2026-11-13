@@ -98,7 +98,7 @@ def resolve_option82(relay, option82):
 
 def file_callback(file_to_transfer, raddress, rport):
   if file_to_transfer in config.static_files:
-    return file(config.static_files[file_to_transfer])
+    return open(config.static_files[file_to_transfer], 'rb')
 
   global db
   option82 = db.get(raddress).decode()
@@ -145,7 +145,7 @@ def file_callback(file_to_transfer, raddress, rport):
   if file_to_transfer == "juniper.tgz":
     model = db.get('client-{}'.format(raddress)).decode()
     if (model in config.models) and ('image' in config.models[model]):
-      return file(config.models[model]['image'])
+      return open(config.models[model]['image'], 'rb')
 
   sw_type = db.get('type-%s' % raddress)
   if sw_type:

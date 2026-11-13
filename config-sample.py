@@ -3,6 +3,7 @@
 import config
 import ipcalc
 import ipplan
+import swsecrets
 import sys
 import os
 import tempita
@@ -15,14 +16,21 @@ import hashlib
 f = open(os.path.join(os.path.dirname(sys.argv[0]), 'switchconfig/config.yaml'), 'r')
 yaml_conf = yaml.safe_load(f)
 
-# Note: To add new variables, the generate function will need to 
+# The secrets (swsecrets.py): the radius key, the local login, the enable
+# password, the SNMP read community and the salt of the SNMP write
+# community. They are read from this JSON file - they are not written
+# here. Set secrets_file to None to give them below instead (a test rig).
+# Note: To add new variables, the generate function will need to
 # be modified as well
+secrets_file = swsecrets.SECRETS_FILE
 radius = ""
 username = ""
 password = ""
 enable = ""
 snmp_ro = ""
 snmp_salt = ""
+if secrets_file:
+  globals().update(swsecrets.load(secrets_file))
 
 # NOTE(bluecmd): 2950 doesn't support VLAN aware context, which means that
 # WhereAmI and dhmon needs v2. No reason to have v3 in that case.
@@ -92,17 +100,17 @@ def generate(switch, model_id):
   mgmt, vlanid = parse_metadata(switch)
   if mgmt is None:
     raise Exception("The switch " + switch + " was not found in ipplan")
-  if radius is None:
+  if not config.radius:
     raise Exception("Radius key not set")
-  if username is None:
+  if not config.username:
     raise Exception("Username not set")
-  if password is None:
+  if not config.password:
     raise Exception("User-password not set")
-  if enable is None:
+  if not config.enable:
     raise Exception("Enable password not set")
-  if snmp_ro is None:
+  if not config.snmp_ro:
     raise Exception("SNMP ro not set")
-  if snmp_salt is None:
+  if not config.snmp_salt:
     raise Exception("SNMP salt not set")
 
   #
