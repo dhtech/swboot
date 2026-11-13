@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import config
-import ipcalc
+import ipaddress
 import ipplan
 import swsecrets
 import sys
@@ -152,13 +152,14 @@ def parse_metadata(switch):
   if found is None:
     return None, None
 
-  network = ipcalc.Network(found.network)
+  network = ipaddress.ip_network(found.network)
 
   mgmt = {}
   mgmt['ip'] = found.ip
-  mgmt['mask'] = str(network.netmask())
-  mgmt['mask_cidr'] = str(network.subnet())
-  mgmt['gw'] = str(network.host_first())
+  mgmt['mask'] = str(network.netmask)
+  mgmt['mask_cidr'] = str(network.prefixlen)
+  # the gateway is the network's first address
+  mgmt['gw'] = str(network.network_address + 1)
   mgmt['vlanid'] = found.mgmt_vlan
 
   return mgmt, found.vlan

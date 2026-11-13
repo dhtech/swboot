@@ -4,7 +4,7 @@ import tftpy
 import tempfile
 import redis
 import syslog
-import netsnmp
+import swsnmp
 import traceback
 import re
 import os
@@ -34,13 +34,11 @@ def generate(out, ip, switch):
   if model == 'cisco':
     # Get Cisco model name (two tries)
     for i in range(2):
-      var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1')
-      model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
+      session = swsnmp.v2(ip, 'private')
+      model = swsnmp.get(session, '.1.3.6.1.2.1.47.1.1.1.1.13.1')
 
       if model == None:
-        var = netsnmp.Varbind('.1.3.6.1.2.1.47.1.1.1.1.13.1001')
-        model = netsnmp.snmpget(var, Version=2, DestHost=ip, Community='private')[0]
-    model = None if model is None else model.decode()
+        model = swsnmp.get(session, '.1.3.6.1.2.1.47.1.1.1.1.13.1001')
     
   if model == None:
     sw_reload(ip)
@@ -70,31 +68,26 @@ def base(out, switch):
   out.write("no vlan 2-4094\n".encode())
   out.write("end\n\n".encode())
 
-def snmpv3_command(var, host, cmd):
-  return cmd(var, Version=3, DestHost=host,
-      SecName=config.snmpv3_username, SecLevel='authPriv',
-      AuthProto='SHA', AuthPass=config.snmpv3_auth,
-      PrivProto='AES128', PrivPass=config.snmpv3_priv)
-
 def resolve_option82(relay, option82):
   module = int(option82[0], 16)
   port = int(option82[1], 16)
   print('Switch on "%s" attached to module "%s" and port "%s"' % (
       relay, module, port))
-  var = netsnmp.VarList(netsnmp.Varbind('.1.3.6.1.2.1.31.1.1.1.1'))
-  if snmpv3_command(var, relay, netsnmp.snmpwalk) is None:
+  session = swsnmp.v3(relay, config.snmpv3_username, config.snmpv3_auth,
+                      config.snmpv3_priv)
+  names = swsnmp.walk(session, '.1.3.6.1.2.1.31.1.1.1.1')
+  if names is None:
     print('ERROR: Unable to talk to relay "%s" for description lookup' % relay)
     return None
 
-  for result in var:
-    iface = result.tag.split('.')[-1]
-    name = result.val
+  for iface, name in names:
     if (name == 'Gi%d/%d' % (module, port) or
         name == 'Gi%d/0/%d' % (module, port)):
       print('Found switch on interface "%s"' % name)
-      var = netsnmp.Varbind(
-        '.1.3.6.1.4.1.9.2.2.1.1.28.%d' % int(iface))
-      return snmpv3_command(var, relay, netsnmp.snmpget)[0][6:]
+      described = swsnmp.get(
+        session, '.1.3.6.1.4.1.9.2.2.1.1.28.%d' % int(iface))
+      # the description is "<6 characters><switch name>"
+      return None if described is None else described[6:]
 
 def file_callback(file_to_transfer, raddress, rport):
   if file_to_transfer in config.static_files:

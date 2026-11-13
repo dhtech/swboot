@@ -5,8 +5,13 @@ On-demand switch configuration system.
 License is GPLv3 if nothing else is stated.
 
 ## Dependencies
-    sudo apt-get install redis-server python3-redis libsnmp-dev python3-tempita python3-ipcalc python3-yaml isc-dhcp-server snmp python3-pip build-essential python3-dev python3-six python3-wheel
-    pip3 install python3-netsnmp ipcalc passlib
+    sudo apt-get install redis-server python3-redis libsnmp-dev python3-tempita python3-yaml isc-dhcp-server snmp python3-pip build-essential python3-dev python3-six python3-wheel
+    sudo apt-get install python3-passlib
+    pip3 install python3-netsnmp
+
+SNMP goes through `swsnmp.py`: the `netsnmp` binding (PyPI's
+python3-netsnmp, compiled against libsnmp) when it is installed,
+otherwise Debian's python3-ezsnmp or python3-easysnmp.
 
 ## Config
     sudo /sbin/ifconfig eth1 inet 192.168.8.10 netmask 255.255.255.0
