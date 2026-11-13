@@ -2,7 +2,7 @@
 
 import config
 import ipcalc
-import sqlite3
+import ipplan
 import sys
 import os
 import tempita
@@ -60,49 +60,31 @@ if "static_configs" in yaml_conf:
     static_configs = yaml_conf["static_configs"]
 
 
+# The site this server serves, as the plan names it (the part before the
+# "@" of its networks' names, e.g. "EVENT"). The plan holds every site;
+# a switch is told about the servers of THIS one only. None: this
+# machine's own site, by its name in the plan (or /etc/swboot/site).
+site = None
+
 # ===============================================================
 # Do not change below this if you do not know what you're doing!
 # ===============================================================
 
+def served_site():
+  return config.site or ipplan.own_site()
+
 # ipplan_host('myhost.event.dreamhack.se')
 #   returns Host object with name, ipv4, and ipv6 properties from ipplan
 #   database
-Host = namedtuple('Host', 'name ipv4 ipv6')
+Host = ipplan.Host
 def ipplan_host(hostname):
-  sql = '''SELECT h.name, h.ipv4_addr_txt as ipv4, h.ipv6_addr_txt as ipv6 
-           FROM host as h 
-           WHERE h.name = ?;'''
-
-  db = sqlite3.connect('/etc/ipplan.db')
-  db.row_factory = sqlite3.Row
-
-  cursor = db.cursor()
-
-  row = cursor.execute(sql, (hostname,)).fetchone()
-  if row is None:
-    raise Exception("No IPv4 address found for host %s not in ipplan" % hostname)
-
-  return Host(name=row['name'], ipv4=row['ipv4'], ipv6=row['ipv6'])
+  return ipplan.host(hostname)
 
 # ipplan_package('mypackage')
-#   returns array of Host objects containing hosts with the given package from
-#   ipplan database
+#   returns array of Host objects containing the hosts OF THIS SITE with
+#   the given package from ipplan database
 def ipplan_package(package):
-  sql = '''SELECT h.name, h.ipv4_addr_txt as ipv4, h.ipv6_addr_txt as ipv6 
-           FROM host as h 
-           INNER JOIN package as p ON p.node_id = h.node_id 
-           WHERE p.name = ?;'''
-
-  db = sqlite3.connect('/etc/ipplan.db')
-  db.row_factory = sqlite3.Row
-
-  cursor = db.cursor()
-
-  hosts = []
-  for row in cursor.execute(sql, (package,)):
-    hosts.append(Host(name=row['name'], ipv4=row['ipv4'], ipv6=row['ipv6']))
-
-  return sorted(set(hosts), key=lambda e: e.name)
+  return ipplan.package(package, served_site())
 
 def generate(switch, model_id):
   model = config.models[model_id]
@@ -158,30 +140,20 @@ def generate(switch, model_id):
   return cfg_subbed
 
 def parse_metadata(switch):
-  sql = '''SELECT n_mgmt.ipv4_txt, h.ipv4_addr_txt, n_mgmt.ipv4_gateway_txt, 
-n_mgmt.vlan, n.vlan FROM active_switch as s, network as n, host as h, 
-network as n_mgmt WHERE s.switch_name LIKE ? AND n.node_id = s.node_id
-AND h.name = s.switch_name AND n_mgmt.node_id = h.network_id'''
-
-  db = sqlite3.connect('/etc/ipplan.db')
-  cursor = db.cursor()
-
-  row = cursor.execute(sql, ('%s%%' % switch.lower(),)).fetchone()
-  if row is None:
+  found = ipplan.switch(switch, served_site())
+  if found is None:
     return None, None
 
-  network_str, mgmt_ip, gateway, mgmt_vlan, vlan = row
-
-  network = ipcalc.Network(network_str)
+  network = ipcalc.Network(found.network)
 
   mgmt = {}
-  mgmt['ip'] = mgmt_ip
+  mgmt['ip'] = found.ip
   mgmt['mask'] = str(network.netmask())
   mgmt['mask_cidr'] = str(network.subnet())
   mgmt['gw'] = str(network.host_first())
-  mgmt['vlanid'] = mgmt_vlan
+  mgmt['vlanid'] = found.mgmt_vlan
 
-  return mgmt, vlan
+  return mgmt, found.vlan
 
 if __name__ == '__main__':
   if len(sys.argv) == 3 and sys.argv[1] == 'dump-snmp-rw':

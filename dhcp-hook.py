@@ -2,8 +2,9 @@
 import os
 import redis
 import sys
-import sqlite3
 import re
+
+import ipplan
 
 db = redis.Redis()
 
@@ -29,11 +30,15 @@ if sys.argv[1] == "commit":
   db.set('mac-{}'.format(swMac), swIp)
   if swRelay != '0.0.0.0':
     db.set('relay-{}'.format(swIp), swRelay)
-    sqlidb = sqlite3.connect('/etc/ipplan.db')
-    cursor = sqlidb.cursor()
-    sql = "SELECT short_name FROM network WHERE ipv4_gateway_txt = ?"
-    networkname = cursor.execute(sql, (swRelay, )).fetchone()[0]
-    db.set('networkname-{}'.format(swIp), networkname)
+    # the network of THIS site with that gateway (the name is only used
+    # in log lines; a relay the plan does not know must not stop a boot)
+    try:
+      networkname = ipplan.network_by_gateway(swRelay, ipplan.own_site())
+    except Exception as error:
+      networkname = None
+      sys.stderr.write('dhcp-hook: %s\n' % error)
+    if networkname:
+      db.set('networkname-{}'.format(swIp), networkname)
   if "Juniper" not in swClient:
     # We don't need any SNMP or base config for Juniper.
     os.system("/scripts/swboot/configure " + swIp + " &")

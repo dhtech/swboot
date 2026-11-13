@@ -23,6 +23,17 @@ License is GPLv3 if nothing else is stated.
 ## Test generation of configuration
     python3 generate.py D20-A WS-C2950T-24
 
+## Sites
+
+The plan database (`/etc/ipplan.db`) holds every site. swboot answers
+for ONE: the site of the server it runs on, found by the server's own
+name in the plan (`ipplan.py`). A template's `ipplan_pkg('ntpd')` gives
+the time servers of that site only, a switch name and a relay address
+are looked up in that site only. A machine that is not in the plan
+names its site in `/etc/swboot/site` (or `site` in `config.py`).
+
+    python3 -m pytest tests
+
 ## Boot procedure
 
 The Cisco switches will try to get DHCP and boot via TFTP if no config exists (wr erase).
